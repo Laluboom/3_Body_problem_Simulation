@@ -12,7 +12,7 @@ Physics N-body gravitational simulation in 3D. Uses Newton's law of gravitation 
 ```bash
 python Runge_kutta.py
 ```
-> Note: README incorrectly states `python simulation.py` — the actual file is `Runge_kutta.py`.
+> README now matches the actual entry point: `Runge_kutta.py`.
 
 ## Key Files
 | File | Role |
@@ -26,5 +26,10 @@ python Runge_kutta.py
 ## Notable Details
 - `G = 1 * 10**-11` in `Runge_kutta.py` (not the real SI value `6.674e-11`); scaled for the toy planet coordinates used
 - Three toy planets (A/B/C) are the active simulation; Earth/Mars objects are defined but not added to the `planets` list
-- `figManager.window.state('zoomed')` is Tk-backend-specific — will raise `AttributeError` on non-Tk matplotlib backends
+- `Runge_kutta.py` currently calls `plt.show()` twice at lines 176 and 178; that is redundant and should be reduced to one call
 - No `requirements.txt`; only external dependency is `matplotlib`
+
+## 2026-05-31 Run Notes
+- Verified the README entry-point fix at `README.md:35`.
+- `python3 -m py_compile Runge_kutta.py formulas.py` passed.
+- `git pull --ff-only` could not reach the remote because local SSH config/remote access failed; no remote changes were fetched.

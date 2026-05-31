@@ -1,7 +1,9 @@
 # TODOs
 
-1. **Fix README run command** — `README.md` line 35 says `python simulation.py` but the entry point is `Runge_kutta.py`. Update the README so someone can actually run it on first read.
+1. **Remove or complete `formulas.py`** — `formulas.py:16-24` contains RK helper stubs that return no usable values, so the file currently reads like a broken alternate implementation.
 
-2. **Remove or complete `formulas.py`** — `runge_kutta_step_2()` at line 22 is an empty stub (`return` with no body) and `runge_kutta_step_1()` computes `k1`/`l1` but also returns nothing. Either finish this as a standalone reference implementation or delete it to avoid confusion with the working code in `Runge_kutta.py`.
+2. **Remove the duplicate display call** — `Runge_kutta.py:176-178` calls `plt.show()` twice; keep one call and verify the animation still opens normally.
 
-3. **Guard the Tk-specific zoom call** — `Runge_kutta.py` line 171 calls `figManager.window.state('zoomed')` which crashes on non-Tk matplotlib backends. Wrap it in `try/except AttributeError` or replace with `plt.tight_layout()`.
+3. **Either use or delete the unused planet presets** — `Runge_kutta.py:161-163` defines `earth` and `mars`, but `Runge_kutta.py:163` only simulates `planet_A`, `planet_B`, and `planet_C`.
+
+4. **Add a dependency file** — `reference.md:27` confirms the project depends on `matplotlib`, but there is still no `requirements.txt` in the project root.

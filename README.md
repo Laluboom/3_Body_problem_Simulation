@@ -32,4 +32,7 @@ The animation uses matplotlib's `FuncAnimation` to update the 3D scene over time
 Just run the script:
 
 ```bash
-python simulation.py
+python Runge_kutta.py
+```
+
+If your environment defaults `python` to Python 2, use `python3 Runge_kutta.py` instead.
