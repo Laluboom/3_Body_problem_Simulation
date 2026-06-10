@@ -27,7 +27,11 @@ python Runge_kutta.py
 - `G = 1 * 10**-11` in `Runge_kutta.py` (not the real SI value `6.674e-11`); scaled for the toy planet coordinates used
 - Three toy planets (A/B/C) are the active simulation; Earth/Mars objects are defined but not added to the `planets` list
 - `Runge_kutta.py` currently calls `plt.show()` twice at lines 176 and 178; that is redundant and should be reduced to one call
-- No `requirements.txt`; only external dependency is `matplotlib`
+- `requirements.txt` now records the only external dependency: `matplotlib`
+
+## 2026-06-10 Run Notes
+- Added `requirements.txt` with `matplotlib`, grounded by the imports in `Runge_kutta.py:2-3`.
+- Verified `requirements.txt` contains exactly one dependency entry: `matplotlib`.
 
 ## 2026-05-31 Run Notes
 - Verified the README entry-point fix at `README.md:35`.
