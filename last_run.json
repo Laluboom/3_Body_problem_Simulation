@@ -1,39 +1,43 @@
 {
-  "date": "2026-06-10",
-  "selected_by": "random choice from eligible Vellai projects after skip rules",
-  "run_attempted": true,
-  "run_succeeded": true,
-  "run_status": "Completed TODO item 4 by adding requirements.txt with the project's only external dependency and refreshing the local tracking files.",
-  "chosen_todo_item": "todo.md item 4 — add a dependency file",
+  "date": "2026-09-30",
+  "tier": "04_early_stage_and_ideas",
+  "selected_by": "daily routine, weighted random",
   "files_inspected": [
-    "reference.md",
+    "Runge_kutta.py",
+    "formulas.py",
+    "matplotlib_guide.py",
+    "Position_Vector_Subtraction.java",
+    "README.md",
+    "requirements.txt",
     "todo.md",
+    "reference.md",
     "last_run.json",
     "cron_brief_latest.md",
-    "Runge_kutta.py"
+    "../../_INDEX.md"
   ],
-  "files_changed": [
-    "requirements.txt",
-    "reference.md",
-    "todo.md",
-    "last_run.json",
-    "cron_brief_latest.md"
-  ],
-  "verification": [
-    {
-      "command": "python3 - <<'PY' ... Path('Vellai/3_Body_problem_Simulation/requirements.txt').read_text().strip() == 'matplotlib' ... PY",
-      "passed": true
-    }
-  ],
-  "git": {
-    "commands_run": "none",
-    "note": "This content job did not run git commands."
-  },
   "issues_confirmed": [
-    "formulas.py:16-24 contains incomplete RK helper stubs",
-    "Runge_kutta.py:176-178 calls plt.show() twice",
-    "Runge_kutta.py:161-163 defines earth and mars, but the active planets list still uses only planet_A, planet_B, and planet_C"
+    "Runge_kutta.py:37 - G = 1e-11 with masses 1/3/4 at separations ~1.4 yields |a| = 3.0e-11 while initial speeds are 1.0; over the full 100-frame run (dt=0.01, t_end=1.0) velocities change by ~1e-11 and final positions match a zero-gravity straight-line prediction to 8 decimals. The simulation shows no gravitational interaction.",
+    "Runge_kutta.py:88-100 - the RK stages leave position at x_backup + v*dt/2 and update_position() then adds v*dt without restoring the backup, so every body advances 1.5*v*dt per step. Verified: planet_A (y=1, vy=1) reaches y=2.5 at t=1.0 instead of y=2.0.",
+    "Runge_kutta.py:88-93 - stage 4 is set up with dt/2, so k4 is evaluated at the midpoint rather than the endpoint required by RK4.",
+    "Runge_kutta.py:115-117 - simulate() steps each planet in place sequentially, so planet_B and planet_C compute forces against already-updated positions; pair forces are not equal and opposite and x-momentum drifts 4.0e-13.",
+    "Integrator benchmark: on the Chenciner-Montgomery figure-eight (G=1, m=1, T=6.32591398, dt=0.001) this integrator gives closure error 1.67 and 45% relative energy loss over one period, versus 5.5e-05 and 2.7e-14 for a correct all-bodies RK4.",
+    "README.md:35 documents 'python Runge_kutta.py' but this machine's system Python has no matplotlib and no pip, so the documented command exits with ModuleNotFoundError; requirements.txt exists but no venv step is documented.",
+    "formulas.py:16-24 - runge_kutta_step_1/2 are stubs returning nothing; runge_kutta_step_1 treats force as a scalar. formulas.py:45-46 prints on import.",
+    "Runge_kutta.py:161-162 - earth and mars are constructed but omitted from the planets list at line 163, and both are placed on the +x axis with velocity purely along +x (radial, so they could not orbit).",
+    "Runge_kutta.py:115,119 - simulate() and animate() accept a 'method' parameter that is never read.",
+    "Runge_kutta.py:122 - animate() calls ax.clear() with no fixed axis limits, so the view autoscales each frame while ticks are stripped at lines 141-143, hiding the rescale and making diverging bodies look static.",
+    "Runge_kutta.py:176-178 - plt.show() is called twice; the second call is a no-op.",
+    "git history - only e333961 (2026-05-30) contains source code; fa2003a and 1700cf5 touched documentation and requirements.txt only. No source file has changed since the initial commit."
   ],
-  "next_review": "2026-06-17",
-  "notes": "Verification was limited to a direct local content check because this run only added dependency documentation and did not change executable code."
+  "browser_checked": false,
+  "proposed_tasks": [
+    "[QUICK WIN ~15min] Set G = 1.0 at Runge_kutta.py:37 so gravity is not 11 orders of magnitude too weak to bend the trajectories",
+    "[BUG] Restore the backup position before the final update and use the full dt for stage 4 (Runge_kutta.py:88-100), ending the 1.5x-per-step position advance",
+    "[BUG] Compute all accelerations from one shared state before applying updates (Runge_kutta.py:115-117) so pair forces stay equal and opposite",
+    "[TEST] Adopt the figure-eight closure test as the definition of working: assert closure < 1e-3 and relative energy drift < 1e-10 over one period",
+    "[IMPROVEMENT] Pin set_xlim/ylim/zlim in animate() (Runge_kutta.py:122) so autoscaling stops disguising motion and escape"
+  ],
+  "verdict": "REVIVE",
+  "verdict_rationale": "This is not templated scaffolding - e333961 is ~290 lines of genuine hand-written physics, and the tier triage on 2026-09-21 already kept it deliberately (_INDEX.md:60). The idea is bounded and finishable, and the distance from stub to working is now a single measurable session: three localised fixes plus one acceptance test that either passes or does not. The figure-eight orbit gives this repo something most stubs lack - an unambiguous, self-verifying definition of done. The honest caveat is that the reason cited for keeping it, its 'Runge-Kutta integrator', is the specific part that is broken.",
+  "next_review": "2026-10-10"
 }
