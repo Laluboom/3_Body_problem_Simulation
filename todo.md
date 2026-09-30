@@ -7,7 +7,7 @@ tasks. The theme: the simulation runs without error but does not simulate gravit
 
 ---
 
-### 1. `[QUICK WIN ~15min]` Set `G = 1.0` at `Runge_kutta.py:37`
+### 1. `[DONE 2026-09-30]` Set `G = 1.0` at `Runge_kutta.py:37`
 
 `G = 1 * 10**-11` with the toy masses (1, 3, 4) and separations (~1.4) gives an
 acceleration of **3.0e-11**. The initial speeds are 1.0. Over the entire 100-frame run

@@ -34,7 +34,7 @@ def update_velocity(planet, force, dt):
     planet.vy += ay * dt
     planet.vz += az * dt
 
-G = 1 * 10**-11
+G = 1.0
 
 def gravitational_force(planet1, planet2):
     dx = planet2.x - planet1.x
