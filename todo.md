@@ -22,7 +22,7 @@ session, and the repo genuinely works at the end of it.
 
 ---
 
-### 1. `[BUG]` Restore the position backup in `runge_kutta_step` — `Runge_kutta.py:88-100`
+### 1. `[DONE 2026-11-01]` Restore the position backup in `runge_kutta_step` — `Runge_kutta.py:88-100`
 
 The single highest-value line of work in this repo.
 

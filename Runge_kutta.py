@@ -65,7 +65,8 @@ def runge_kutta_step(planet, dt, planets):
     planet.x = x_backup + planet.vx * dt / 2
     planet.y = y_backup + planet.vy * dt / 2
     planet.z = z_backup + planet.vz * dt / 2
-    
+    v1x, v1y, v1z = planet.vx, planet.vy, planet.vz
+
     second = calculate_total_force(planet, planets)
     k2x, k2y, k2z = (
         second[0] / planet.mass,
@@ -78,6 +79,7 @@ def runge_kutta_step(planet, dt, planets):
     planet.x = x_backup + planet.vx * dt / 2
     planet.y = y_backup + planet.vy * dt / 2
     planet.z = z_backup + planet.vz * dt / 2
+    v2x, v2y, v2z = planet.vx, planet.vy, planet.vz
 
     third = calculate_total_force(planet, planets)
     k3x, k3y, k3z = (
@@ -85,19 +87,23 @@ def runge_kutta_step(planet, dt, planets):
         third[1] / planet.mass,
         third[2] / planet.mass,
     )
-    planet.vx = vx_backup + k3x * dt / 2
-    planet.vy = vy_backup + k3y * dt / 2
-    planet.vz = vz_backup + k3z * dt / 2
-    planet.x = x_backup + planet.vx * dt / 2
-    planet.y = y_backup + planet.vy * dt / 2
-    planet.z = z_backup + planet.vz * dt / 2
+    planet.vx = vx_backup + k3x * dt
+    planet.vy = vy_backup + k3y * dt
+    planet.vz = vz_backup + k3z * dt
+    planet.x = x_backup + planet.vx * dt
+    planet.y = y_backup + planet.vy * dt
+    planet.z = z_backup + planet.vz * dt
+    v3x, v3y, v3z = planet.vx, planet.vy, planet.vz
     last = calculate_total_force(planet, planets)
     k4x, k4y, k4z = last[0] / planet.mass, last[1] / planet.mass, last[2] / planet.mass
     planet.vx = vx_backup + (k1x + 2 * k2x + 2 * k3x + k4x) * dt / 6
     planet.vy = vy_backup + (k1y + 2 * k2y + 2 * k3y + k4y) * dt / 6
     planet.vz = vz_backup + (k1z + 2 * k2z + 2 * k3z + k4z) * dt / 6
-    # Update position
-    update_position(planet, dt)
+    v4x, v4y, v4z = planet.vx, planet.vy, planet.vz
+    # Update position using the RK4-weighted average of the stage velocities
+    planet.x = x_backup + (v1x + 2 * v2x + 2 * v3x + v4x) * dt / 6
+    planet.y = y_backup + (v1y + 2 * v2y + 2 * v3y + v4y) * dt / 6
+    planet.z = z_backup + (v1z + 2 * v2z + 2 * v3z + v4z) * dt / 6
     # Append the updated position to the orbit
     planet.orbit_rk.append((planet.x, planet.y, planet.z))
 
