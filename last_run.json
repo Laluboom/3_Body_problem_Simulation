@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-30",
+  "date": "2026-11-01",
   "tier": "04_early_stage_and_ideas",
   "selected_by": "daily routine, weighted random",
   "files_inspected": [
@@ -9,35 +9,93 @@
     "Position_Vector_Subtraction.java",
     "README.md",
     "requirements.txt",
+    ".gitignore",
     "todo.md",
     "reference.md",
     "last_run.json",
-    "cron_brief_latest.md",
-    "../../_INDEX.md"
+    "/home/laluboom/repos/_INDEX.md"
   ],
   "issues_confirmed": [
-    "Runge_kutta.py:37 - G = 1e-11 with masses 1/3/4 at separations ~1.4 yields |a| = 3.0e-11 while initial speeds are 1.0; over the full 100-frame run (dt=0.01, t_end=1.0) velocities change by ~1e-11 and final positions match a zero-gravity straight-line prediction to 8 decimals. The simulation shows no gravitational interaction.",
-    "Runge_kutta.py:88-100 - the RK stages leave position at x_backup + v*dt/2 and update_position() then adds v*dt without restoring the backup, so every body advances 1.5*v*dt per step. Verified: planet_A (y=1, vy=1) reaches y=2.5 at t=1.0 instead of y=2.0.",
-    "Runge_kutta.py:88-93 - stage 4 is set up with dt/2, so k4 is evaluated at the midpoint rather than the endpoint required by RK4.",
-    "Runge_kutta.py:115-117 - simulate() steps each planet in place sequentially, so planet_B and planet_C compute forces against already-updated positions; pair forces are not equal and opposite and x-momentum drifts 4.0e-13.",
-    "Integrator benchmark: on the Chenciner-Montgomery figure-eight (G=1, m=1, T=6.32591398, dt=0.001) this integrator gives closure error 1.67 and 45% relative energy loss over one period, versus 5.5e-05 and 2.7e-14 for a correct all-bodies RK4.",
-    "README.md:35 documents 'python Runge_kutta.py' but this machine's system Python has no matplotlib and no pip, so the documented command exits with ModuleNotFoundError; requirements.txt exists but no venv step is documented.",
-    "formulas.py:16-24 - runge_kutta_step_1/2 are stubs returning nothing; runge_kutta_step_1 treats force as a scalar. formulas.py:45-46 prints on import.",
-    "Runge_kutta.py:161-162 - earth and mars are constructed but omitted from the planets list at line 163, and both are placed on the +x axis with velocity purely along +x (radial, so they could not orbit).",
-    "Runge_kutta.py:115,119 - simulate() and animate() accept a 'method' parameter that is never read.",
-    "Runge_kutta.py:122 - animate() calls ax.clear() with no fixed axis limits, so the view autoscales each frame while ticks are stripped at lines 141-143, hiding the rescale and making diverging bodies look static.",
-    "Runge_kutta.py:176-178 - plt.show() is called twice; the second call is a no-op.",
-    "git history - only e333961 (2026-05-30) contains source code; fa2003a and 1700cf5 touched documentation and requirements.txt only. No source file has changed since the initial commit."
+    {
+      "location": "Runge_kutta.py:88-100",
+      "issue": "Position advances 1.5x per step. The RK stages leave planet.x/y/z at x_backup + v*dt/2 (lines 91-93) and the backup is never restored; line 100 then calls update_position(planet, dt), adding v*dt on top. Isolated with gravity absent: one free body, v=1, dt=0.01, one runge_kutta_step call -> x = 0.0150, not 0.0100. Exactly 1.5x.",
+      "severity": "critical"
+    },
+    {
+      "location": "Runge_kutta.py:88-93",
+      "issue": "Stage-4 setup uses dt/2, so k4 is evaluated at the midpoint instead of the endpoint. RK4 requires the full dt.",
+      "severity": "high"
+    },
+    {
+      "location": "Runge_kutta.py:100",
+      "issue": "Position is advanced with the end-of-step velocity rather than the RK4-weighted average of the four stage velocities, capping position accuracy at first order regardless of the velocity update.",
+      "severity": "high"
+    },
+    {
+      "location": "Runge_kutta.py:115-117",
+      "issue": "simulate() steps one planet at a time and each step commits that planet's new position before the next is stepped, so planet_B sees planet_A's already-advanced position. Pair forces are not equal and opposite. Measured on the shipped config (dt=0.01, t=1.0): total momentum drift 0.727 against |P| = 5.099 (14%); 0.109 (2%) once the position bug is fixed.",
+      "severity": "high"
+    },
+    {
+      "location": "Runge_kutta.py:122",
+      "issue": "ax.clear() runs every frame and set_xlim/set_ylim/set_zlim are never called anywhere in the file (grep: zero occurrences), so matplotlib autoscales each frame. Ticks are also stripped at lines 141-143, removing the only cue that the frame rescaled.",
+      "severity": "medium"
+    },
+    {
+      "location": "Runge_kutta.py:158-163",
+      "issue": "The shipped planets list has total momentum P = (3, 1, 4) and total mass 8, so v_com = (0.375, 0.125, 0.5), |v_com| = 0.637. Over t=8 the centre of mass alone travels 5.1 units while pair separations stay 0.4-1.4, so the triple coasts out of frame.",
+      "severity": "medium"
+    },
+    {
+      "location": "Runge_kutta.py:120,171",
+      "issue": "animate() hardcodes dt = 0.01 and FuncAnimation requests frames=range(100), so the animation covers t_end = 1.0 -- 16% of one figure-eight period (T = 6.32591398, which needs ~633 frames at this dt).",
+      "severity": "low"
+    },
+    {
+      "location": "formulas.py:16-24,45-46,3",
+      "issue": "Abandoned earlier draft. runge_kutta_step_1/2 are empty stubs that return nothing; runge_kutta_step_1 takes force as a scalar and divides by mass. The module prints on import (lines 45-46) and still defines G = 6.67408e-11 (line 3), now contradicting Runge_kutta.py:37.",
+      "severity": "low"
+    },
+    {
+      "location": "Runge_kutta.py:161-162",
+      "issue": "earth and mars are constructed but never added to the planets list at line 163. Both also sit on the +x axis with velocity purely along +x (radial, not tangential), so they would fly straight outward rather than orbit.",
+      "severity": "low"
+    },
+    {
+      "location": "Runge_kutta.py:115,119",
+      "issue": "simulate() and animate() both take a 'method' parameter that is never read in either body; vestige of an intended Euler-vs-RK4 comparison.",
+      "severity": "low"
+    },
+    {
+      "location": "Runge_kutta.py:176-178",
+      "issue": "plt.show() is called twice; the second call is a no-op.",
+      "severity": "low"
+    },
+    {
+      "location": "README.md:35",
+      "issue": "Documents 'python Runge_kutta.py' with no install step, but this machine's system Python has neither matplotlib nor pip (python3 -m pip -> No module named pip), so the documented command exits with ModuleNotFoundError.",
+      "severity": "low"
+    }
   ],
+  "measurements": {
+    "shipped_config_energy_drift_t1": "145.6%",
+    "shipped_config_momentum_drift_t1": "0.727 of |P| = 5.099",
+    "figure_eight_closure_today": 2.946,
+    "figure_eight_energy_drift_today": "44.9%",
+    "figure_eight_closure_with_position_fix": 0.001278,
+    "figure_eight_closure_with_both_fixes": 0.000109,
+    "figure_eight_energy_drift_with_both_fixes": "2.0e-14",
+    "note": "All measured by transcribing Runge_kutta.py:11-117 verbatim into a dependency-free script; matplotlib is not installed and pip is unavailable, so the animation itself could not be run."
+  },
   "browser_checked": false,
   "proposed_tasks": [
-    "[QUICK WIN ~15min] Set G = 1.0 at Runge_kutta.py:37 so gravity is not 11 orders of magnitude too weak to bend the trajectories",
-    "[BUG] Restore the backup position before the final update and use the full dt for stage 4 (Runge_kutta.py:88-100), ending the 1.5x-per-step position advance",
-    "[BUG] Compute all accelerations from one shared state before applying updates (Runge_kutta.py:115-117) so pair forces stay equal and opposite",
-    "[TEST] Adopt the figure-eight closure test as the definition of working: assert closure < 1e-3 and relative energy drift < 1e-10 over one period",
-    "[IMPROVEMENT] Pin set_xlim/ylim/zlim in animate() (Runge_kutta.py:122) so autoscaling stops disguising motion and escape"
+    "[BUG] Restore the position backup in runge_kutta_step, use full dt for stage 4, and advance position with the RK4-weighted velocity (Runge_kutta.py:88-100) -- closure 2.95 -> 1.3e-03",
+    "[BUG] Advance all three bodies from the same state: four synchronized sweeps, one commit (Runge_kutta.py:115-117) -- restores exact momentum conservation",
+    "[TEST] Adopt the Chenciner-Montgomery figure-eight closure test as the definition of working, with thresholds that the position fix alone does not accidentally fail",
+    "[QUICK WIN ~15min] Pin the axis limits in animate() and subtract v_com from the shipped initial velocities (Runge_kutta.py:122, 158-163)",
+    "[CHORE] Delete formulas.py, Position_Vector_Subtraction.java, matplotlib_guide.py, the unused earth/mars bodies, the unread method parameter, and the duplicate plt.show()"
   ],
   "verdict": "REVIVE",
-  "verdict_rationale": "This is not templated scaffolding - e333961 is ~290 lines of genuine hand-written physics, and the tier triage on 2026-09-21 already kept it deliberately (_INDEX.md:60). The idea is bounded and finishable, and the distance from stub to working is now a single measurable session: three localised fixes plus one acceptance test that either passes or does not. The figure-eight orbit gives this repo something most stubs lack - an unambiguous, self-verifying definition of done. The honest caveat is that the reason cited for keeping it, its 'Runge-Kutta integrator', is the specific part that is broken.",
-  "next_review": "2026-10-10"
+  "verdict_rationale": "This is not a stub dressed up as a project: Runge_kutta.py is 178 lines of hand-written physics that matches the repo name, and the previous review's one-line G fix landed and worked. The remaining gap between 'stub' and 'working' is one function plus one loop restructure, and 'working' is now a number rather than an opinion -- the figure-eight closure test takes it from 2.95 to 1.1e-04. Measured: the position fix alone buys 99.96% of the win. That is one session, not a roadmap.",
+  "next_review": "2026-11-11"
 }

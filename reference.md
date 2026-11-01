@@ -2,7 +2,8 @@
 
 ## Purpose
 A 3D gravitational N-body simulation: Newtonian pair forces between `Planet` objects,
-integrated forward and drawn as a live matplotlib animation with orbit trails.
+integrated forward and drawn as a live matplotlib animation with orbit trails. Geometric
+units (`G = 1`), not SI.
 
 ## Stack
 Python 3 (tested against 3.14.4) · `matplotlib` (3D axes + `FuncAnimation`) · `math`.
@@ -13,9 +14,10 @@ No numpy.
 python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
 python3 Runge_kutta.py
 ```
-The venv step is not optional in practice: this machine's system Python has neither
-`matplotlib` nor `pip`, so the bare `python Runge_kutta.py` in `README.md:35` exits with
-`ModuleNotFoundError: No module named 'matplotlib'`.
+The venv step is not optional on this machine: the system Python has neither `matplotlib`
+nor `pip` (`python3 -m pip` → `No module named pip`), so the bare `python Runge_kutta.py`
+in `README.md:35` exits with `ModuleNotFoundError: No module named 'matplotlib'`.
+Still true as of 2026-11-01.
 
 ## Key files
 | File | Role |
@@ -25,40 +27,48 @@ The venv step is not optional in practice: this machine's system Python has neit
 | `matplotlib_guide.py` | Matplotlib 3D scratch file, not imported by anything |
 | `Position_Vector_Subtraction.java` | Standalone Java vector class, unused |
 
-## Current state — runs, but does not simulate gravity
-Measured 2026-09-30 by transcribing the integrator and running it (no matplotlib needed):
+## Current state — gravity is on, the integrator is wrong
+Measured 2026-11-01 by transcribing the integrator verbatim and running it in pure Python
+(no matplotlib needed). The 2026-09-30 `G = 1.0` fix landed in `10dd819`, so the old
+"three straight lines" finding is **resolved** — and the real defects are now visible.
 
-- **Gravity is negligible.** `G = 1 * 10**-11` (`Runge_kutta.py:37`) against masses 1/3/4
-  at separations ~1.4 gives `|a| = 3.0e-11`, while initial speeds are 1.0. Across the
-  whole 100-frame run (t_end = 1.0) velocities change by ~1e-11. Final positions match a
-  zero-gravity straight-line prediction to 8 decimals. **The output is three straight
-  lines.**
-- **Position advances 1.5× per step.** The RK stages leave position at
-  `x_backup + v*dt/2` and `update_position` (`Runge_kutta.py:100`) then adds `v*dt` on
-  top without restoring the backup. `planet_A` (y=1, vy=1) reaches y=2.5 at t=1.0
-  instead of 2.0.
-- **Stage 4 uses `dt/2`** (`Runge_kutta.py:88-93`), so `k4` is sampled at the midpoint,
-  not the endpoint. With the position defect above, the scheme is not RK4 in any sense.
-- **Bodies are advanced sequentially, not simultaneously** (`Runge_kutta.py:115-117`),
-  so each body reacts to its predecessors' already-updated positions. Pair forces stop
-  being equal and opposite; x-momentum drifts 4.0e-13.
+Shipped config, dt=0.01, 100 frames (t=1.0): relative energy drift **145.6%**, total
+momentum drift **0.727** against `|P| = 5.099` (**14%**).
 
-Benchmark on the Chenciner–Montgomery figure-eight orbit (G=1, m=1, T=6.32591398,
-dt=0.001), one full period:
+Three confirmed defects, in value order:
+
+- **Position advances 1.5× per step** — `Runge_kutta.py:88-100`. The RK stages leave
+  position at `x_backup + v*dt/2` and line 100 adds `v*dt` on top without restoring the
+  backup. Isolated: one free body, `v=1`, `dt=0.01`, one step → `x = 0.0150`, not 0.0100.
+  Same block: stage 4 is set up with `dt/2`, so `k4` is sampled at the midpoint not the
+  endpoint; and position uses the end-of-step velocity, not the RK4-weighted average.
+- **Bodies advance sequentially, not simultaneously** — `Runge_kutta.py:115-117`. Each
+  body reacts to its predecessors' already-committed positions, so pair forces are not
+  equal and opposite and momentum is not conserved.
+- **The frame hides the motion** — `ax.clear()` every frame (`:122`) with no
+  `set_xlim/ylim/zlim` anywhere in the file, and ticks stripped (`:141-143`). Meanwhile
+  the shipped config has `v_com = (0.375, 0.125, 0.5)`, so the whole triple coasts out of
+  frame while the autoscale chases it.
+
+Benchmark — Chenciner–Montgomery figure-eight (G=1, m=1, T=6.32591398), one period:
 
 | | closure error | relative energy drift |
 |---|---|---|
-| correct all-bodies RK4 | 5.5e-05 | 2.7e-14 |
-| this repo's integrator | 1.67 | 45% |
+| this repo today | 2.95 | 44.9% |
+| + position fix only | 1.3e-03 | 2.8e-10 |
+| + simultaneous stepping | 1.1e-04 | 2.0e-14 |
 
-That test is the cheapest available definition of "working" for this project, and
-`todo.md` item 4 proposes adopting it.
+That test is the cheapest available definition of "working" here; `todo.md` item 3
+proposes adopting it, with threshold caveats.
+
+Non-obvious and worth keeping: the shipped config's positions and velocities are cyclic
+permutations, and under a correct integrator the three pair separations stay identical to
+9 decimal places — a bounded, cyclic-symmetric equilateral triple, not the escape it
+currently resembles.
 
 ## History
-Three commits. `e333961` (2026-05-30) is the only real code — all of it, in one push by
-Visesh. `fa2003a` and `1700cf5` are automation passes that touched only docs and added a
-one-line `requirements.txt`. **No source code has changed since the initial commit.**
-
-`_INDEX.md:60` lists this repo as surviving the 2026-09-21 tier triage on the strength of
-its "Runge-Kutta integrator." The integrator is the part that does not work; the idea and
-the scaffolding around it are fine.
+Five commits. `e333961` (2026-05-30) is the only substantial code — all of it, in one
+push. `10dd819` (2026-09-30) is a one-line physics fix from the doer agent. The other
+three are automation doc passes. `_INDEX.md:60` lists this repo at "289 LOC, Runge-Kutta
+integrator"; ~110 of those lines are the dead files above, and the integrator is the part
+that does not work.
